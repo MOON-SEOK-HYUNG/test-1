@@ -1,0 +1,158 @@
+#include <stdio.h>
+#include <string.h>
+#include <math.h>
+#define MAXN 15
+#define INF (int)(1e5)
+
+int N, blue_front, blue_end, red_front, red_end;
+int ans = INF;
+int map[MAXN][MAXN];
+int people[MAXN], region[MAXN], use[MAXN];
+int blue_Que[MAXN * MAXN], red_Que[MAXN * MAXN];
+int blue_visited[MAXN], red_visited[MAXN];
+
+int blue_BFS(int num)
+{
+	int cnt = 0;
+
+	blue_front = blue_end = 0;
+	memset(blue_visited, 0, sizeof(blue_visited));
+
+	for (int i = 1; i <= N; i++)
+	{
+		if (region[i])
+		{
+			blue_visited[i] = 1;
+			blue_Que[blue_end++] = i;
+			cnt++;
+			break;
+		}
+	}
+
+	while (blue_front < blue_end)
+	{
+		int n = blue_Que[blue_front++];
+
+		for (int i = 1; i <= N; i++)
+		{
+			if (!map[n][i] || blue_visited[i] || !region[i]) continue;
+			
+			blue_visited[i] = 1;
+			blue_Que[blue_end++] = i;
+			cnt++;
+		}
+	}
+
+	if (cnt == num) return 1;
+	else return 0;
+}
+
+int red_BFS(int num)
+{
+	int cnt = 0;
+	red_front = red_end = 0;
+	memset(red_visited, 0, sizeof(red_visited));
+
+	for (int i = 1; i <= N; i++)
+	{
+		if (!region[i])
+		{
+			red_visited[i] = 1;
+			red_Que[red_end++] = i;
+			cnt++;
+			break;
+		}
+	}
+
+	while (red_front < red_end)
+	{
+		int n = red_Que[red_front++];
+
+		for (int i = 1; i <= N; i++)
+		{
+			if (!map[n][i] || red_visited[i] || region[i]) continue;
+
+			red_visited[i] = 1;
+			red_Que[red_end++] = i;
+			cnt++;
+		}
+	}
+
+	if (cnt == num) return 1;
+	else return 0;
+}
+
+void Solve(int num, int cnt)
+{
+	if (cnt >= num)
+	{
+		if (blue_BFS(num) && red_BFS(N-num))
+		{
+			int blue_num = 0;
+			int red_num = 0;
+
+			for (int i = 1; i <= N; i++)
+			{
+				if (region[i]) blue_num += people[i];
+				else red_num += people[i];
+			}
+
+			if (ans > abs(blue_num - red_num)) ans = abs(blue_num - red_num);
+		}
+
+		return;
+	}
+
+	for (int i = cnt+1; i <= N; i++)
+	{
+		if (use[i]) continue;
+
+		use[i] = 1;
+		region[i] = 1;
+		Solve(num, cnt + 1);
+		region[i] = 0;
+		use[i] = 0;
+	}
+}
+
+int main()
+{
+	int cnt = 0;
+
+	scanf("%d", &N);
+
+	for (int i = 1; i <= N; i++)
+	{
+		scanf("%d", &people[i]);
+	}
+
+	for (int i = 1; i <= N; i++)
+	{
+		int num;
+		scanf("%d", &num);
+
+		if (num == 0) cnt++;
+
+		for (int j = 0; j < num; j++)
+		{
+			int reg;
+			scanf("%d", &reg);
+
+			map[i][reg] = 1;
+			map[reg][i] = 1;
+		}
+	}
+
+	if (cnt >= 2 && N > 2) printf("%d \n", -1);
+	else
+	{
+		for (int i = 1; i <= (N / 2); i++)
+		{
+			Solve(i, 0);
+		}
+
+		printf("%d \n", ans);
+	}
+
+	return 0;
+}
